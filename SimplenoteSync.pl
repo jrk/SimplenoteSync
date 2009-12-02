@@ -77,6 +77,8 @@ my $token;
 my $debug = 0;					# enable log messages for troubleshooting
 my $allow_local_updates = 1;	# Allow changes to local text files
 my $allow_server_updates = 1;	# Allow changes to Simplenote server
+# my $allow_local_updates = 0;	# Allow changes to local text files
+# my $allow_server_updates = 0;	# Allow changes to Simplenote server
 my $store_base_text = 0;		# Trial mode to allow conflict resolution
 my $flag_network_traffic = 1;	# Print a warning for each network call
 
@@ -165,8 +167,8 @@ sub titleToFilename {
 	# Convert note's title into valid filename
 	my $title = shift;
 	
-	# Strip prohibited characters
-	$title =~ s/[:\\\/]/ /g;
+	# Replace prohibited characters
+	$title =~ s/[:\\\/]/-/g;
 	
 	$title .= ".$file_extension";
 	
@@ -441,6 +443,12 @@ sub synchronizeNotesToFolder {
 	
 	# Iterate through sync database and assess current state of those files
 	
+	#@jrk test for 
+	#foreach my $key (keys %note) {
+	#	
+	#}
+	#return;
+	
 	foreach my $key (keys %syncNotes) {
 		# Cycle through each prior note from last sync
 		my $last_mod_date = $syncNotes{$key}{modify};
@@ -516,6 +524,9 @@ sub synchronizeNotesToFolder {
 				} else {
 					# note on server has also changed
 					warn "$filename was modified locally and on server - please check file for conflicts.\n";
+					
+					my $local_mod_date = $file{"$directory/$filename"}{modify};
+					print "\tserver: $last_mod_date, local: $local_mod_date\n" if $debug;
 
 					# Use the stored copy from last sync to enable a three way
 					#	merge, then use this as the official copy and allow
@@ -534,15 +545,16 @@ sub synchronizeNotesToFolder {
 			if ($note{$key}{modify} eq $last_mod_date) {
 				# note on server also appears unchanged
 
-				# so we delete this file
-				print "kill $filename\n" if $debug;
-				deleteNoteOnline($key);
-				
-				
-				# Remove this file from other queues
+				# # so we delete this file
+				# print "kill $filename\n" if $debug;
+				# deleteNoteOnline($key);
+				# 
+				# 
+				# # Remove this file from other queues
 				delete($note{$key});
 				delete($file{"$directory/$filename"});
 				$deletedFromDatabase{$key} = 1;
+				warn "kill $filename skipped for debugging - will probably restore on next sync."
 				
 			} else {
 				# note on server has also changed
