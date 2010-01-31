@@ -1,0 +1,23 @@
+#!/bin/sh
+
+GitExe="/usr/local/bin/git"
+SimplenoteSyncPerlPath="${HOME}/bin/SimplenoteSync.pl"
+SimplenoteSyncRCPath="${HOME}/.simplenotesyncrc"
+[ -f "$SimplenoteSyncRCPath" ] && (
+SimplenotePath=`tail -1 ${SimplenoteSyncRCPath}`
+[ -d "$SimplenotePath" ] && (
+date > /tmp/.simplenote-last-sync
+cd "$SimplenotePath"
+pwd
+${GitExe} add --all .
+${GitExe} commit -a -m "auto-commit `hostname -s`: pre-sync"
+#git pull
+#git push
+sleep 2
+perl -w "$SimplenoteSyncPerlPath"
+sleep 2
+${GitExe} add --all .
+${GitExe} commit -a -m "auto-commit `hostname -s`: post-sync"
+)
+) < /dev/null
+# > /dev/null 2> /dev/null < /dev/null
